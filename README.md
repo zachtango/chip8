@@ -12,3 +12,6 @@
 - 16 input keys
 - 64 x 32 monochrome display memory
 
+## references
+https://austinmorlan.com/posts/chip8_emulator/
+http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#00E0
