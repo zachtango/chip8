@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <time.h>
+#include <random>
 
 using namespace std;
 
@@ -33,7 +35,15 @@ public:
     uint8_t soundTimer{};
     uint8_t keypad[16]{};
     uint32_t video[64 * 32]{};
-    uint16_t opcode{};
+    uint16_t opcode{}; // stores curr instr
+    uniform_int_distribution<uint8_t> rByte;
+    mt19937 rGen;
+
+    Chip8(){
+        // srand(time(NULL)); // rand seed
+        rGen = mt19937(time(NULL));
+        rByte = uniform_int_distribution<uint8_t>(0, 255);
+    }
 
     void readROM(string fileName){
         ifstream file;
@@ -65,6 +75,11 @@ public:
     void I_00E0(){
         // clear the display (CLS)
 
+        // set all bits of video to 0
+
+        for(int i = 0; i < 64 * 32; i++){
+            video[i] = 0;
+        }
     }
 
     void I_00EE(){
@@ -75,18 +90,19 @@ public:
         subtracts 1 from the stack pointer
         */
 
-        pc = stk[sp];
         sp -= 1;
+        pc = stk[sp];
     }
 
-    void I_1nnn(uint16_t nnn){
+    void I_1nnn(){
         // jump to location nnn (JP addr)
 
+        uint16_t addr = opcode & 0x0FFFu;
         // set the pc to nnn
-        pc = nnn;
+        pc = addr;
     }
 
-    void I_2nnn(uint16_t nnn){
+    void I_2nnn(){
         // call subroutine at nnn (CALL addr)
 
         /*
@@ -94,18 +110,23 @@ public:
         put the current pc on the top of the stk
         set pc to nnn
         */
+        uint16_t addr = opcode & 0x0FFFu;
 
-        sp += 1;
         stk[sp] = pc;
-        pc = nnn;
+        sp += 1;
+        
+        pc = addr;
     }
 
-    void I_3xkk(int x, uint8_t kk){
+    void I_3xkk(){
         // skip the next instr if Vx != kk (SNE Vx, byte) (see V in properties)
         
         /*
         The interpreter compares register Vx to kk, and if they are equal, increments the program counter by 2.
         */
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t kk = (opcode & 0x00FFu);
 
         if(V[x] == kk){
             pc += 2;
@@ -113,20 +134,26 @@ public:
     }
 
     
-    void I_4xkk(int x, uint8_t kk){ 
+    void I_4xkk(){ 
         // SNE Vx, byte
         // Skip next instruction if Vx != kk.
 
         // compares register Vx to kk, and if they are not equal, increments the program counter by 2.
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t kk = (opcode & 0x00FFu);
 
         if(V[x] != kk){
             pc += 2;
         }
     }
 
-    void I_5xy0(int x, int y){
+    void I_5xy0(){
         // SE Vx, Vy
         // Skip next instruction if Vx = Vy.
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
 
         // compares register Vx to register Vy, and if they are equal, increments the program counter by 2.
         if(V[x] == V[y]){
@@ -134,32 +161,42 @@ public:
         }
     }
 
-    void I_6xkk(int x, uint8_t kk){
+    void I_6xkk(){
         // LD Vx, byte
         // Set Vx = kk.
 
         // puts the value kk into register Vx.
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t kk = opcode & 0x00FFu;
+
         V[x] = kk;
     }
 
-    void I_7xkk(int x, uint8_t kk){
+    void I_7xkk(){
         // ADD Vx, byte
         // Set Vx = Vx + kk.
 
         // Adds the value kk to the value of register Vx, then stores the result in Vx.
-    
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t kk = opcode & 0x00FFu;
+        
         V[x] += kk;
     }
 
-    void I_8xy0(int x, int y){
+    void I_8xy0(){
         // LD Vx, Vy
         // Set Vx = Vy.
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
 
         // Stores the value of register Vy in register Vx.
         V[x] = V[y];
     }
 
-    void I_8xy1(int x, int y){
+    void I_8xy1(){
         // OR Vx, Vy
         // Set Vx = Vx OR Vy.
 
@@ -167,10 +204,13 @@ public:
         Performs a bitwise OR on the values of Vx and Vy, then stores the result in Vx. 
         */
 
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
+
         V[x] = V[x] | V[y];
     }
 
-    void I_8xy2(int x, int y){
+    void I_8xy2(){
         // AND Vx, Vy
         // Set Vx = Vx AND Vy.
 
@@ -179,10 +219,13 @@ public:
         then stores the result in Vx. 
         */
 
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
+
         V[x] = V[x] & V[y];
     }
 
-    void I_8xy3(int x, int y){
+    void I_8xy3(){
         // XOR Vx, Vy
         // Set Vx = Vx XOR Vy.
 
@@ -191,10 +234,13 @@ public:
         then stores the result in Vx. 
         */
 
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
+
         V[x] = V[x] ^ V[y];
     }
 
-    void I_8xy4(int x, int y){
+    void I_8xy4(){
         // ADD Vx, Vy
         // Set Vx = Vx + Vy, set VF = carry.
 
@@ -204,23 +250,28 @@ public:
         Only the lowest 8 bits of the result are kept, and stored in Vx.
         */
 
-        int sum = V[x] + V[y];
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
+
+        uint16_t sum = V[x] + V[y];
         
-        if(sum > 255){
-            sum = sum & 0xFF; // save last 8 bits
+        if(sum > 255u){
             V[0xF] = 1;
         } else{
             V[0xF] = 0;
         }
 
-        V[x] = sum;
+        V[x] = sum & 0xFFu; // save last 8 bits
     }
 
-    void I_8xy5(int x, int y){
+    void I_8xy5(){
         // SUB Vx, Vy
         // Set Vx = Vx - Vy, set VF = NOT borrow.
 
         // If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from Vx, and the results stored in Vx.
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
 
         if(V[x] > V[y]){
             V[0xF] = 1;
@@ -231,23 +282,28 @@ public:
         V[x] = V[x] - V[y];
     }
 
-    void I_8xy6(int x){
+    void I_8xy6(){
         // SHR Vx {, Vy}
         // Set Vx = Vx SHR 1.
 
         // If the least-significant bit of Vx is 1, then VF is set to 1, otherwise 0. Then Vx is divided by 2.
 
-        int lsb = V[x] & 1;
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        
+        uint8_t lsb = V[x] & 1u;
         
         V[0xF] = lsb;
-        V[x] = V[x] >> 1;
+        V[x] = V[x] >> 1u;
     }
 
-    void I_8xy7(int x, int y){
+    void I_8xy7(){
         // SUBN Vx, Vy
         // Set Vx = Vy - Vx, set VF = NOT borrow.
 
         // If Vy > Vx, then VF is set to 1, otherwise 0. Then Vx is subtracted from Vy, and the results stored in Vx.
+        
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
 
         if(V[y] > V[x]){
             V[0xF] = 1;
@@ -258,42 +314,53 @@ public:
         V[x] = V[y] - V[x];
     }
 
-    void I_8xyE(int x){ 
+    void I_8xyE(){ 
         // SHL Vx {, Vy}
         // Set Vx = Vx SHL 1.
 
         // If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0. Then Vx is multiplied by 2.
-        int msb = V[x] >> 7;
+        
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        
+        uint8_t msb = V[x] >> 7u;
 
         V[0xF] = msb;
-        V[x] = V[x] << 1;
+        V[x] = V[x] << 1u;
     }
 
-    void I_9xy0(int x, int y){ 
+    void I_9xy0(){ 
         // SNE Vx, Vy
         // Skip next instruction if Vx != Vy.
 
         // The values of Vx and Vy are compared, and if they are not equal, the program counter is increased by 2.
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
+
         if(V[x] != V[y]){
             pc += 2;
         }
     }
 
-    void I_Annn(uint16_t nnn){
+    void I_Annn(){
         // I is the index register
         // LD I, addr
         // Set I = nnn.
 
         // The value of register I is set to nnn.
 
+        uint16_t nnn = opcode & 0x0FFF;
+
         index = nnn;
     }
 
-    void I_Bnnn(uint16_t nnn){
+    void I_Bnnn(){
         // JP V0, addr
         // Jump to location nnn + V0.
 
         // The program counter is set to nnn plus the value of V0.
+
+        uint16_t nnn = opcode & 0x0FFF;
 
         pc = V[0] + nnn;
     }
@@ -303,7 +370,13 @@ public:
         // Set Vx = random byte AND kk.
 
         // The interpreter generates a random number from 0 to 255, which is then ANDed with the value kk. The results are stored in Vx
-
+        
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t kk = (opcode & 0x00FFu);
+        
+        uint8_t r = rByte(rGen);
+        
+        V[x] = r & kk;
     }
 
     void I_Dxyn(){
@@ -316,6 +389,13 @@ public:
         Sprites are XORed onto the existing screen. If this causes any pixels to be erased, VF is set to 1, otherwise it is set to 0. 
         If the sprite is positioned so part of it is outside the coordinates of the display, it wraps around to the opposite side of the screen. 
         */
+
+        uint8_t n = opcode & 0x000F;
+
+        for(int i = 0; i < n; i++){
+            
+        }
+
     }
 
     void I_Ex9E(){
@@ -412,6 +492,7 @@ int main(){
 
     Chip8 chip8 = Chip8();    
     chip8.readROM("puzzle.rom");
+
 
     return 0;
 }
