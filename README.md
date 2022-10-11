@@ -3,7 +3,7 @@
 ## diaries
 I've logged my progress in diaries for each day I work on this app. In each entry, I talk about the problems I ran into and the
 new things I learned while working on this emulator (e.g. emulation in general, sprites, even number distributions in c++, etc.)
-https://github.com/zachtango/chip8/tree/main/diaries
+- https://github.com/zachtango/chip8/tree/main/diaries
 
 
 ## chip8 components:

@@ -45,6 +45,17 @@ public:
         // srand(time(NULL)); // rand seed
         rGen = mt19937(time(NULL));
         rByte = uniform_int_distribution<uint8_t>(0, 255);
+
+        /*
+        0x050 - 0x0A0 reserved for 16 built-in chars (0 through F)
+        ROM looks here for those chars
+        */
+
+        // memory[0x050] = 0xF0;
+        // memory[0x050 + 1] = 0x90;
+        // 0x90
+        // 0x90
+        // 0xF0
     }
 
     void readROM(string fileName){
@@ -465,41 +476,73 @@ public:
         // The value of DT is placed into Vx.
         uint8_t x = (opcode & 0x0F00u) >> 8u;
 
+        V[x] = delayTimer;
+    }
+
+
+    void I_Fx0A(){
+        // LD Vx, K
+        // Wait for a key press, store the value of the key in Vx.
+
+        // All execution stops until a key is pressed, then the value of that key is stored in Vx.
+
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        
+        bool notPressed = true;
+        while(notPressed){
+
+            for(uint8_t i = 0; i < 16; i++){
+                if(!keypad[i]){
+                    V[x] = i;
+                    notPressed = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    void I_Fx15(){ 
+        // LD DT, Vx
+        // Set delay timer = Vx.
+
+        // DT is set equal to the value of Vx.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
         delayTimer = V[x];
     }
 
-    /*
-    Fx0A - LD Vx, K
-    Wait for a key press, store the value of the key in Vx.
+    void I_FX18(){
+        // LD ST, Vx
+        // Set sound timer = Vx.
 
-    All execution stops until a key is pressed, then the value of that key is stored in Vx.
+        // ST is set equal to the value of Vx.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        soundTimer = V[x];
+    }
 
+    void I_Fx1E(){
+        // ADD I, Vx
+        // Set I = I + Vx.
 
-    Fx15 - LD DT, Vx
-    Set delay timer = Vx.
+        // The values of I and Vx are added, and the results are stored in I.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        index = index + V[x];
+    }
 
-    DT is set equal to the value of Vx.
+    void I_Fx29(){
+        // LD F, Vx
+        // Set I = location of sprite for digit Vx.
 
+        /* 
+        The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. 
+        See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
+        */
 
-    Fx18 - LD ST, Vx
-    Set sound timer = Vx.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
 
-    ST is set equal to the value of Vx.
+        index = 0x050 + 5 * V[x];
+    }
 
-
-    Fx1E - ADD I, Vx
-    Set I = I + Vx.
-
-    The values of I and Vx are added, and the results are stored in I.
-
-
-    Fx29 - LD F, Vx
-    Set I = location of sprite for digit Vx.
-
-    The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. See section 2.4, Display, for more information on the Chip-8 hexadecimal font.
-    */
-
-    void I_Fx33(int x){
+    void I_Fx33(){
         // LD B, Vx
         // Store BCD representation of Vx in memory locations I, I+1, and I+2.
 
@@ -510,29 +553,33 @@ public:
         and the ones digit at location I+2.
         */
 
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+
         memory[index] = (V[x] / 100) % 10;
         memory[index + 1] = (V[x] / 10) % 10;
         memory[index + 2] = (V[x]) % 10;
     }
 
-    void I_Fx55(int x){
+    void I_Fx55(){
         // LD [I], Vx
         // Store registers V0 through Vx in memory starting at location I.
 
         // The interpreter copies the values of registers V0 through Vx into memory, starting at the address in I.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
 
-        for(int i = 0; i < x + 1; i++){
+        for(uint8_t i = 0; i <= x; i++){
             memory[index + i] = V[i];
         }
     }
 
-    void I_Fx65(int x){
+    void I_Fx65(){
         // LD Vx, [I]
         // Read registers V0 through Vx from memory starting at location I.
 
         // The interpreter reads values from memory starting at location I into registers V0 through Vx.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
 
-        for(int i = 0; i < x + 1; i++){
+        for(uint8_t i = 0; i <= x; i++){
             V[i] = memory[index + i];
         }
     }
