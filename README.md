@@ -15,3 +15,5 @@
 ## references
 - https://austinmorlan.com/posts/chip8_emulator/
 - http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#00E0
+- https://stackoverflow.com/questions/37840270/rand-not-generating-random-numbers-even-after-srandtimenull
+- https://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
