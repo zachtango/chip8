@@ -439,21 +439,36 @@ public:
         // Skip next instruction if key with the value of Vx is pressed.
 
         // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        
+        if(!keypad[V[x]]){
+            pc += 2;
+        }
+    }
+
+    void I_ExA1(){
+        // SKNP Vx
+        // Skip next instruction if key with the value of Vx is not pressed.
+
+        // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+
+        if(keypad[V[x]]){
+            pc += 2;
+        }
+    }
+
+    void I_Fx07(){
+        // LD Vx, DT
+        // Set Vx = delay timer value.
+
+        // The value of DT is placed into Vx.
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+
+        delayTimer = V[x];
     }
 
     /*
-    ExA1 - SKNP Vx
-    Skip next instruction if key with the value of Vx is not pressed.
-
-    Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
-
-
-    Fx07 - LD Vx, DT
-    Set Vx = delay timer value.
-
-    The value of DT is placed into Vx.
-
-
     Fx0A - LD Vx, K
     Wait for a key press, store the value of the key in Vx.
 
