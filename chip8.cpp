@@ -9,6 +9,8 @@
 using namespace std;
 
 const unsigned int ROM_START_ADDRESS = 0x200;
+const unsigned int VIDEO_WIDTH = 64;
+const unsigned int VIDEO_HEIGHT = 32;
 
 class Chip8 {
 
@@ -34,7 +36,7 @@ public:
     uint8_t delayTimer{};
     uint8_t soundTimer{};
     uint8_t keypad[16]{};
-    uint32_t video[64 * 32]{}; // 0x00000000 or 0xFFFFFFFF
+    uint32_t video[VIDEO_WIDTH * VIDEO_HEIGHT]{}; // 0x00000000 or 0xFFFFFFFF
     uint16_t opcode{}; // stores curr instr
     uniform_int_distribution<uint8_t> rByte;
     mt19937 rGen;
@@ -401,6 +403,8 @@ public:
             32 times
         */
         
+
+        // FIXME STILL NEED TO IMPLEMENT WRAPPING
         uint8_t x = (opcode & 0x0F00u) >> 8u;
         uint8_t y = (opcode & 0x00F0u) >> 4u;
         uint8_t n = opcode & 0x000F;
@@ -409,17 +413,15 @@ public:
 
         V[0xF] = 0;
 
-        bool collision = false;
-
-        for(int i = 0; i < n; i++){
+        for(int row = 0; row < n; row++){
             // sprite row i
-            uint8_t spriteRow = memory[index + i];
+            uint8_t spriteRow = memory[index + row];
 
             // start from leftmost bit and go to rightmost bit
-            for(uint8_t b = 0; b < 8; b++){ 
+            for(uint8_t col = 0; col < 8; col++){ 
                 // for each bit in spriteRow, xor it with the corresponding bit in video
-                uint8_t spriteBit = (spriteRow >> (8 - b - 1)) & 0x1u;
-                uint16_t videoI = (V[y] + i) * 64 + V[x] + b;
+                uint8_t spriteBit = (spriteRow >> (8 - col - 1)) & 0x1u;
+                uint16_t videoI = (V[y] + row) * 64 + V[x] + col;
 
                 if(spriteBit){
                     if(video[videoI] == 0xFFFFFFFF) { // collision
