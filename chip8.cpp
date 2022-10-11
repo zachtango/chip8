@@ -34,7 +34,7 @@ public:
     uint8_t delayTimer{};
     uint8_t soundTimer{};
     uint8_t keypad[16]{};
-    uint32_t video[64 * 32]{};
+    uint32_t video[64 * 32]{}; // 0x00000000 or 0xFFFFFFFF
     uint16_t opcode{}; // stores curr instr
     uniform_int_distribution<uint8_t> rByte;
     mt19937 rGen;
@@ -390,10 +390,44 @@ public:
         If the sprite is positioned so part of it is outside the coordinates of the display, it wraps around to the opposite side of the screen. 
         */
 
+        /*
+            0 - 63
+            64 - 127
+            128 - 191
+            192 - 255
+            .
+            .
+            .
+            32 times
+        */
+        
+        uint8_t x = (opcode & 0x0F00u) >> 8u;
+        uint8_t y = (opcode & 0x00F0u) >> 4u;
         uint8_t n = opcode & 0x000F;
 
+        // (Vx, Vy) maps to V[y] * 64 + V[x] index in video
+
+        V[0xF] = 0;
+
+        bool collision = false;
+
         for(int i = 0; i < n; i++){
-            
+            // sprite row i
+            uint8_t spriteRow = memory[index + i];
+
+            // start from leftmost bit and go to rightmost bit
+            for(uint8_t b = 0; b < 8; b++){ 
+                // for each bit in spriteRow, xor it with the corresponding bit in video
+                uint8_t spriteBit = (spriteRow >> (8 - b - 1)) & 0x1u;
+                uint16_t videoI = (V[y] + i) * 64 + V[x] + b;
+
+                if(spriteBit){
+                    if(video[videoI] == 0xFFFFFFFF) { // collision
+                        V[0xF] = 1;
+                    }
+                    video[videoI] ^= 0xFFFFFFFF;
+                }
+            }
         }
 
     }
