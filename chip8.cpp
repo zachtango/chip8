@@ -5,8 +5,11 @@
 #include <iomanip>
 #include <time.h>
 #include <random>
+#include <unordered_map>
 
 using namespace std;
+
+typedef void (Chip8::*Chip8Func)();
 
 const unsigned int ROM_START_ADDRESS = 0x200;
 const unsigned int VIDEO_WIDTH = 64;
@@ -40,6 +43,11 @@ public:
     uint16_t opcode{}; // stores curr instr
     uniform_int_distribution<uint8_t> rByte;
     mt19937 rGen;
+    unordered_map<uint16_t, Chip8Func> functions; // function table that points to function
+    unordered_map<uint16_t, Chip8Func> functions0;
+    unordered_map<uint16_t, Chip8Func> functions8;
+    unordered_map<uint16_t, Chip8Func> functionsE;
+    unordered_map<uint16_t, Chip8Func> functionsF;
 
     Chip8(){
         // srand(time(NULL)); // rand seed
@@ -56,6 +64,52 @@ public:
         // 0x90
         // 0x90
         // 0xF0
+
+        // functions alrdy intitialized?? idk
+        functions[0x0] = &I_0;
+        functions[0x1] = &I_1nnn;
+        functions[0x2] = &I_2nnn;
+        functions[0x3] = &I_3xkk;
+        functions[0x4] = &I_4xkk;
+        functions[0x5] = &I_5xy0;
+        functions[0x6] = &I_6xkk;
+        functions[0x7] = &I_7xkk;
+        functions[0x8] = &I_8;
+        functions[0x9] = &I_9xy0;
+        functions[0xA] = &I_Annn;
+        functions[0xB] = &I_Bnnn;
+        functions[0xC] = &I_Cxkk;
+        functions[0xD] = &I_Dxyn;
+        functions[0xE] = &I_E;
+        functions[0xF] = &I_F;
+        // 0x0
+        functions0[0xE0] = &I_00E0;
+        functions0[0xEE] = &I_00EE;
+        // 0x8
+        functions8[0x0] = &I_8xy0;
+        functions8[0x1] = &I_8xy1;
+        functions8[0x2] = &I_8xy2;
+        functions8[0x3] = &I_8xy3;
+        functions8[0x4] = &I_8xy4;
+        functions8[0x5] = &I_8xy5;
+        functions8[0x6] = &I_8xy6;
+        functions8[0x7] = &I_8xy7;
+        functions8[0xE] = &I_8xyE;
+        // 0xE
+        functionsE[0x9E] = &I_Ex9E;
+        functionsE[0xA1] = &I_ExA1;
+        // 0xF
+        functionsF[0x07] = &I_Fx07; 
+        functionsF[0x0A] = &I_Fx0A;
+        functionsF[0x15] = &I_Fx15;
+        functionsF[0x18] = &I_FX18;
+        functionsF[0x1E] = &I_Fx1E;
+        functionsF[0x29] = &I_Fx29;
+        functionsF[0x33] = &I_Fx33;
+        functionsF[0x55] = &I_Fx55;
+        functionsF[0x65] = &I_Fx65;
+
+
     }
 
     void readROM(string fileName){
@@ -584,6 +638,39 @@ public:
         }
     }
 
+    void I_0(){
+        (this->*functions0[opcode & 0xFF])();
+    }
+
+    void I_8(){
+        (this->*functions8[opcode & 0xF])();
+    }
+
+    void I_E(){
+        (this->*functionsE[opcode & 0xFF])();
+    }
+
+    void I_F(){
+        (this->*functionsF[opcode & 0xFF])();
+    }
+
+    void Cycle(){
+        // fetch next instruction (the next instr will be at pc)
+        opcode = (memory[pc] << 8u) | memory[pc + 1];
+
+        pc += 2;
+
+        // decode and execute instr
+        (this->*functions[opcode >> 12u])();
+
+        if(delayTimer > 0){
+            delayTimer -= 1;
+        }
+
+        if(soundTimer > 0){
+            delayTimer -= 1;
+        }
+    }
 };
 
 int main(){
@@ -591,6 +678,10 @@ int main(){
     Chip8 chip8 = Chip8();    
     chip8.readROM("puzzle.rom");
 
+    uint8_t x = 0xFF;
+    uint16_t y = x << 8u;
+
+    cout << hex << (int) y << endl;
 
     return 0;
 }
