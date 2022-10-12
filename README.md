@@ -23,3 +23,8 @@ new things I learned while working on this emulator (e.g. emulation in general, 
 - http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#00E0
 - https://stackoverflow.com/questions/37840270/rand-not-generating-random-numbers-even-after-srandtimenull
 - https://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
+- https://stackoverflow.com/questions/68174660/function-pointer-expression-preceding-parentheses-of-apparent-call-must-have
+- https://stackoverflow.com/questions/19555121/how-to-get-current-timestamp-in-milliseconds-since-1970-just-the-way-java-gets
+- https://www.cprogramming.com/tutorial/function-pointers.html
+- https://stackoverflow.com/questions/24370732/what-does-natural-size-really-mean-in-c
+- https://www.techopedia.com/definition/5498/clock-cycle
