@@ -6,10 +6,9 @@
 #include <time.h>
 #include <random>
 #include <unordered_map>
+#include <chrono>
 
 using namespace std;
-
-typedef void (Chip8::*Chip8Func)();
 
 const unsigned int ROM_START_ADDRESS = 0x200;
 const unsigned int VIDEO_WIDTH = 64;
@@ -19,6 +18,7 @@ const unsigned int KEYPAD_START_ADDRESS = 0x050;
 class Chip8 {
 
 public:
+    typedef void (Chip8::*Chip8Func)();
     uint8_t V[16]{}; // Vx refers to a register where x is the hex digit 0 to F (16 registers total)
     
     /*
@@ -54,6 +54,8 @@ public:
         // srand(time(NULL)); // rand seed
         rGen = mt19937(time(NULL));
         rByte = uniform_int_distribution<uint8_t>(0, 255);
+
+        pc = ROM_START_ADDRESS;
 
         /*
         0x050 - 0x0A0 reserved for 16 built-in chars (0 through F)
@@ -129,6 +131,10 @@ public:
     }
 
     void readROM(string fileName){
+        memory[ROM_START_ADDRESS] = 0xF0;
+        memory[ROM_START_ADDRESS + 1] = 0x0A;
+        return;
+
         ifstream file;
 
         file.open(fileName, ios::binary | ios::ate);
@@ -675,7 +681,12 @@ public:
     void Cycle(){
         // fetch next instruction (the next instr will be at pc)
         opcode = (memory[pc] << 8u) | memory[pc + 1];
-
+        
+        if(opcode == 0xF10A){
+            cout << "SHOULD WAIT\n";
+        }
+        
+        cout << hex << setw(4) << setfill('0') << opcode << endl;
         pc += 2;
 
         // decode and execute instr
@@ -693,13 +704,24 @@ public:
 
 int main(){
 
-    Chip8 chip8 = Chip8();    
+    Chip8 chip8 = Chip8();
+
     chip8.readROM("puzzle.rom");
 
-    uint8_t x = 0xFF;
-    uint16_t y = x << 8u;
+    int cycleDelay = 1; // order of ms
+    auto prevCycle = std::chrono::steady_clock::now();
 
-    cout << hex << (int) y << endl;
+    
+    for(int i = 0; i < 10000000; i++){
+        auto currTime = std::chrono::steady_clock::now();
+        double elapsedMS = chrono::duration<double, milli>(currTime - prevCycle).count();
+        
+        if( elapsedMS > cycleDelay ){
+            cout << "test\n";
+            chip8.Cycle();
+            prevCycle = chrono::steady_clock::now(); // or should i do currTime?
+        }
+    }
 
     return 0;
 }
