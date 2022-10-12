@@ -522,7 +522,7 @@ public:
         // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
         uint8_t x = (opcode & 0x0F00u) >> 8u;
         
-        if(!keypad[V[x]]){
+        if(keypad[V[x]]){
             pc += 2;
         }
     }
@@ -534,7 +534,7 @@ public:
         // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
         uint8_t x = (opcode & 0x0F00u) >> 8u;
 
-        if(keypad[V[x]]){
+        if(!keypad[V[x]]){
             pc += 2;
         }
     }
@@ -558,16 +558,18 @@ public:
 
         uint8_t x = (opcode & 0x0F00u) >> 8u;
         
-        bool notPressed = true;
-        while(notPressed){
+        bool pressed = false;
 
-            for(uint8_t i = 0; i < 16; i++){
-                if(!keypad[i]){
-                    V[x] = i;
-                    notPressed = true;
-                    break;
-                }
+        for(uint8_t i = 0; i < 16; i++){
+            if(keypad[i]){
+                V[x] = i;
+                pressed = true;
+                break;
             }
+        }
+
+        if(!pressed){
+            pc -= 2;
         }
     }
 
