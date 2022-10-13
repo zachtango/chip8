@@ -1,83 +1,30 @@
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-
-#include <SDL2/SDL.h>
+#include "chip8.h"
+#include "device.h"
 
 using namespace std;
 
 
-int main(int argc, char* argv[]) {
-    uint32_t video[64 * 32]{}; // 0x00000000 or 0xFFFFFFFF
+int main(int argv, char** args){
+    Chip8 chip8 = Chip8();
+    Device device = Device();
 
-    SDL_Window *window = nullptr;
-    SDL_Renderer *renderer = nullptr;
+    chip8.readROM("puzzle.rom");
 
-    if(SDL_Init(SDL_INIT_VIDEO) < 0){
-        cout << "Video init error\n";
-        return 0;
-    }
+    int cycleDelay = 1; // order of ms
+    auto prevCycle = std::chrono::steady_clock::now();
 
-    SDL_CreateWindowAndRenderer(640, 320, 0, &window, &renderer);
-
-    if(window == NULL){
-        cout << "Window creation error\n";
-        return 0;
-    }
-
-    if(renderer == NULL){
-        cout << "Renderer creation error\n";
-        return 0;
-    }
-    
-
-    
-    // background set to this color
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-
-    SDL_Rect pixel;
-
-    // set color to white
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
-    bool isRunning = true;
-    SDL_Event evt;
-
-    int i = 0;
-    while(isRunning){
-        while(SDL_PollEvent(&evt) != 0){
-            if(evt.type == SDL_QUIT){
-                isRunning = false;
-            } else if(evt.type == SDL_KEYDOWN){
-                switch(evt.key.keysym.sym){
-                    case SDLK_1:
-
-                        if(i < 64){
-                            i += 1;
-                        } else{
-                            i = 0;
-                        }
-                        
-                        video[64 + i] = 0xFFFFFFFF;
-
-                        pixel.x = 200;
-                        pixel.y = 200;
-                        pixel.w = 10;
-                        pixel.h = 10;
-
-                        SDL_RenderFillRect(renderer, &pixel);
-                        SDL_RenderPresent(renderer);
-
-                        break;
-                }
-            }
+    bool quit = false;
+    while(!quit){
+        quit = device.processInput(chip8.keypad);
+        auto currTime = std::chrono::steady_clock::now();
+        double elapsedMS = chrono::duration<double, milli>(currTime - prevCycle).count();
+        
+        if( elapsedMS > cycleDelay ){
+            chip8.Cycle();
+            prevCycle = chrono::steady_clock::now();
+            device.updateWindow(chip8.video, 64 * sizeof(chip8.video[0]));
         }
-
     }
 
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-   
     return 0;
 }
