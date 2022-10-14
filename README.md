@@ -10,6 +10,8 @@ new things I learned while working on this emulator (e.g. emulation in general, 
 I set up a compile script and have included the necessary libraries already in the repo. The SDL2.dll file is for Windows 32-bit only.
 dll files for other OS can be found in https://www.libsdl.org/.
 
+example usage: `./chip8.exe roms/tetris.rom`
+
 ## chip8 components:
 - 16 8 bit registers
 - 4096 bytes of memory
