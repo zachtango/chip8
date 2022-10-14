@@ -4,14 +4,21 @@
 using namespace std;
 
 
-int main(int argv, char** args){
+int main(int argc, char *argv[]){
+    if(argc != 2){
+        cout << "chip8.exe <rom file>\n";
+        return 0;
+    }
+
     Chip8 chip8 = Chip8();
     Device device = Device();
+    uint32_t video[VIDEO_WIDTH * VIDEO_HEIGHT];
 
-    chip8.readROM("puzzle.rom");
+    chip8.readROM(string(argv[1]));
 
-    int cycleDelay = 1; // order of ms
+    int cycleDelay = 3; // order of ms
     auto prevCycle = std::chrono::steady_clock::now();
+    int rowSize = VIDEO_WIDTH * sizeof(chip8.video[0]);
 
     bool quit = false;
     while(!quit){
@@ -20,9 +27,9 @@ int main(int argv, char** args){
         double elapsedMS = chrono::duration<double, milli>(currTime - prevCycle).count();
         
         if( elapsedMS > cycleDelay ){
-            chip8.Cycle();
             prevCycle = chrono::steady_clock::now();
-            device.updateWindow(chip8.video, 64 * sizeof(chip8.video[0]));
+            chip8.Cycle();
+            device.updateWindow(chip8.video, rowSize);
         }
     }
 

@@ -1,9 +1,12 @@
 #include "device.h"
 #include <SDL2/SDL.h>
+#include <iostream>
 
 using namespace std;
 
 Device::Device(){
+    SDL_Init(SDL_INIT_VIDEO);
+
     window = SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 320, SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 64, 32);
@@ -22,14 +25,14 @@ Device::~Device(){
     SDL_Quit();
 }
 
-void Device::updateWindow(void * video, int rowBits){
+void Device::updateWindow(void const* video, int rowBits){
     SDL_UpdateTexture(texture, NULL, video, rowBits);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
 }
 
-bool Device::processInput(uint8_t *keypad){
+bool Device::processInput(uint8_t keypad[]){
     /*
         Keypad       Keyboard
         +-+-+-+-+    +-+-+-+-+
@@ -51,7 +54,7 @@ bool Device::processInput(uint8_t *keypad){
         } else if(evt.type == SDL_KEYDOWN){
             switch(evt.key.keysym.sym){
                 case SDLK_1:
-                    keypad[1] = 1;
+                    keypad[1] = 0x1;
                     break;
                 case SDLK_2:
                     keypad[2] = 1;

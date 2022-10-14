@@ -16,15 +16,16 @@ using namespace std;
 #define VIDEO_WIDTH 64
 #define VIDEO_HEIGHT 32
 #define KEYPAD_START_ADDRESS 0x050
-
-
+#define FONTSET_SIZE 80
+#define FONTSET_START_ADDRESS 0x080
+#define KEY_COUNT 16
+#define REGISTER_COUNT 16
+#define MEMORY_SIZE 4096
+#define STACK_LEVELS 16
 
 class Chip8 {
 
 public:
-    typedef void (Chip8::*Chip8Func)();
-    uint8_t V[16]{}; // Vx refers to a register where x is the hex digit 0 to F (16 registers total)
-    
     /*
         0x000 - 0x1FF reserved for CHIP-8 interpreter (don't read/write from)
 
@@ -35,30 +36,43 @@ public:
             ROM instr stored starting at 0x200
             anything left after the ROM's space is free memory to use
     */
-    uint8_t memory[4096]{};
+    uint8_t keypad[KEY_COUNT];
+    uint32_t video[VIDEO_WIDTH * VIDEO_HEIGHT]; // 0x00000000 or 0xFFFFFFFF; allocate on the heap
 
+    Chip8();
+
+    void readROM(string fileName);
+
+    void Cycle();
+
+
+typedef void (Chip8::*Chip8Func)();
+private:
+    uint8_t V[REGISTER_COUNT]{}; // Vx refers to a register where x is the hex digit 0 to F (16 registers total)
+    uint8_t memory[MEMORY_SIZE];
+    uint16_t stk[STACK_LEVELS]{};
     uint16_t index{};
     uint16_t pc{};
-    uint8_t stk[16]{};
     uint8_t sp{};
     uint8_t delayTimer{};
     uint8_t soundTimer{};
-    uint8_t keypad[16]{};
-    uint32_t video[VIDEO_WIDTH * VIDEO_HEIGHT]{}; // 0x00000000 or 0xFFFFFFFF
     uint16_t opcode{}; // stores curr instr
     uniform_int_distribution<uint8_t> rByte;
     mt19937 rGen;
+
     unordered_map<uint16_t, Chip8Func> functions; // function table that points to function
     unordered_map<uint16_t, Chip8Func> functions0;
     unordered_map<uint16_t, Chip8Func> functions8;
     unordered_map<uint16_t, Chip8Func> functionsE;
     unordered_map<uint16_t, Chip8Func> functionsF;
 
-    Chip8();
-
-    void readROM(string fileName);
-
     // Instr Set
+    uint8_t I_x();
+    uint8_t I_y();
+    uint8_t I_kk();
+    uint16_t I_nnn();
+    uint8_t I_i();
+
     void I_00E0();
 
     void I_00EE();
@@ -135,5 +149,4 @@ public:
 
     void I_F();
 
-    void Cycle();
 };

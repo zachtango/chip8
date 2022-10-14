@@ -15,6 +15,6 @@ public:
     Device();
     ~Device();
 
-    void updateWindow(void * video, int rowBits);
+    void updateWindow(void const* video, int rowBits);
     bool processInput(uint8_t *keypad);
 };
