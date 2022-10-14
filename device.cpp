@@ -1,6 +1,4 @@
 #include "device.h"
-#include <SDL2/SDL.h>
-#include <iostream>
 
 using namespace std;
 

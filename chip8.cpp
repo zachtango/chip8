@@ -1,19 +1,8 @@
 #include "chip8.h"
-#include <cstdint>
 #include <fstream>
-#include <iostream>
-#include <iomanip>
 #include <time.h>
-#include <random>
-#include <unordered_map>
 #include <chrono>
 #include <cstring>
-
-/*
-    0x050 - 0x0A0 reserved for 16 built-in chars (0 through F)
-    ROM looks here for those chars
-*/
-
 
 uint8_t fontset[FONTSET_SIZE] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0,
@@ -35,7 +24,6 @@ uint8_t fontset[FONTSET_SIZE] = {
 };
 
 Chip8::Chip8(){
-  
     rGen = mt19937(time(NULL));
     rByte = uniform_int_distribution<uint8_t>(0, 255);
 
@@ -46,11 +34,14 @@ Chip8::Chip8(){
 
     memset(video, 0, sizeof(video));
 
+    /*
+        0x050 - 0x0A0 reserved for 16 built-in chars (0 through F)
+        ROM looks here for those chars
+    */
     for(uint8_t i = 0; i < FONTSET_SIZE; i++){
         memory[KEYPAD_START_ADDRESS + i] = fontset[i];
     }
 
-    // functions alrdy intitialized?? idk
     functions[0x0] = &I_0;
     functions[0x1] = &I_1nnn;
     functions[0x2] = &I_2nnn;
@@ -142,6 +133,9 @@ void Chip8::readROM(string fileName){
     }
 }
 
+// Instr Set
+
+// decodes instrunctions 0, 8, E, F
 void Chip8::I_0(){
     uint8_t i = opcode & 0x00FFu;
     auto table = this->functions0;
@@ -178,8 +172,7 @@ void Chip8::I_F(){
     }
 }
 
-// Instr Set
-
+// extract bits
 uint8_t Chip8::I_x(){
     return (opcode & 0x0F00u) >> 8u;
 }
@@ -200,6 +193,7 @@ uint8_t Chip8::I_i(){
     return (opcode & 0xF000u) >> 12u;
 }
 
+// instructions
 void Chip8::I_00E0(){
     // clear the display (CLS)
 
@@ -477,7 +471,6 @@ void Chip8::I_Dxyn(){
         32 times
     */
     
-
     uint8_t n = opcode & 0x000Fu;
 
     // (Vx, Vy) maps to V[I_y()] * 64 + V[I_x()] index in video
