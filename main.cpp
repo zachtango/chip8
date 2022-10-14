@@ -1,6 +1,9 @@
 #include "chip8.h"
 #include "device.h"
 
+#include <iostream>
+#include <chrono>
+
 using namespace std;
 
 

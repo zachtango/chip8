@@ -1,8 +1,4 @@
 #include "chip8.h"
-#include <fstream>
-#include <time.h>
-#include <chrono>
-#include <cstring>
 
 uint8_t fontset[FONTSET_SIZE] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0,
