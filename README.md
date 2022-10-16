@@ -12,6 +12,8 @@ dll files for other OS can be found in https://www.libsdl.org/.
 
 example usage: `./chip8.exe roms/tetris.rom`
 
+![Example](/demo.png?raw=true)
+
 ## chip8 components:
 - 16 8 bit registers
 - 4096 bytes of memory
