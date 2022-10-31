@@ -12,7 +12,7 @@ dll files for other OS can be found in https://www.libsdl.org/.
 
 example usage: `./chip8.exe roms/tetris.rom`
 
-![Example](/demo.png?raw=true)
+![Example](/demo.gif?raw=true)
 
 ## chip8 components:
 - 16 8 bit registers
